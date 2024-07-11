@@ -7,6 +7,8 @@ import localizedFormat from 'dayjs/plugin/localizedFormat';
 import 'dayjs/locale/pt-br';
 import { getMailClient } from "../lib/mail";
 import { dayjs } from "../lib/dayjs";
+import { ClientError } from "../errors/client-error";
+import { env } from "../env";
 
 dayjs.locale('pt-br')
 dayjs.extend(localizedFormat)
@@ -33,11 +35,11 @@ export async function confirmTrip (app: FastifyInstance){
         }
        })
     if(!trip){
-      throw new Error('Trip not found')
+      throw new ClientError('Trip not found')
     }
 
     if (trip.is_confirmed){
-      return reply.redirect(`http://localhost:3000/trips/${tripId}`)
+      return reply.redirect(`${env.WEB_BASE_URL}/trips/${tripId}`)
     }
 
     await prisma.trip.update({
@@ -52,7 +54,7 @@ export async function confirmTrip (app: FastifyInstance){
 
     await Promise.all(
       trip.participants.map(async (participant) =>{
-        const confirmationLink = `http://localhost:3333/trips/participants/${participant.id}/confirm`
+        const confirmationLink = `${env.API_BASE_URL}/trips/participants/${participant.id}/confirm`
         const message = await mail.sendMail(
           {
             from: { name: 'Russo', address: 'equipe@gmail.com'},
@@ -77,6 +79,6 @@ export async function confirmTrip (app: FastifyInstance){
       }
     )) 
 
-    return reply.redirect(`http://localhost:3000/trips/${tripId}`)
+    return reply.redirect(`${env.WEB_BASE_URL}/trips/${tripId}`)
   })
 }

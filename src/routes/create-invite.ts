@@ -5,6 +5,8 @@ import z from "zod";
 import { dayjs } from "../lib/dayjs";
 import { getMailClient } from "../lib/mail";
 import { prisma } from "../lib/prisma";
+import { ClientError } from "../errors/client-error";
+import { env } from "../env";
 
 export async function createInvite (app: FastifyInstance){
   app.withTypeProvider<ZodTypeProvider>().post('/trips/:tripId/invites', {
@@ -21,7 +23,7 @@ export async function createInvite (app: FastifyInstance){
     const trip = await prisma.trip.findUnique({where: {id: tripId}})
 
     if(!trip){
-      throw new Error('Trip not found')
+      throw new ClientError('Trip not found')
     }
 
     const participant = await prisma.participant.create({
@@ -35,7 +37,7 @@ export async function createInvite (app: FastifyInstance){
     const formattedEndDate = dayjs(trip.ends_at).format('LL')
     
     const mail = await getMailClient()
-        const confirmationLink = `http://localhost:3333/trips/participants/${participant.id}/confirm`
+        const confirmationLink = `${env.API_BASE_URL}/trips/participants/${participant.id}/confirm`
         const message = await mail.sendMail(
           {
             from: { name: 'Russo', address: 'equipe@gmail.com'},
